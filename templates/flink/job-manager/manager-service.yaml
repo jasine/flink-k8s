@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.kubernetes.io/qcloud-loadbalancer-clusterid: {{.Values.clusterid}}
+    service.kubernetes.io/qcloud-loadbalancer-internal-subnetid: {{.Values.subnetid}}
+  labels:
+    qcloud-app: flink-job-manager
+  name: flink-job-manager
+  namespace: {{.Values.namespace}}
+spec:
+  clusterIP: None
+  ports:
+  - name: flink-job-manager-rpc-port
+    port: 6123
+    protocol: TCP
+    targetPort: 6123
+  - name: flink-job-manager-blob-port
+    port: 6124
+    protocol: TCP
+    targetPort: 6124
+  - name: flink-job-manager-query-port
+    port: 6125
+    protocol: TCP
+    targetPort: 6125
+  selector:
+    qcloud-app: flink-job-manager

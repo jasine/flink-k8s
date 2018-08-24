@@ -1,0 +1,70 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  annotations:
+    description: flink-task-manager
+  creationTimestamp: null
+  labels:
+    qcloud-app: flink-task-manager
+  name: flink-task-manager
+  namespace: {{.Values.namespace}}
+spec:
+  podManagementPolicy: Parallel
+  serviceName: flink-task-manager
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      qcloud-app: flink-task-manager
+  template:
+    metadata:
+      labels:
+        qcloud-app: flink-task-manager
+    spec:
+      containers:
+      - args:
+        - taskmanager
+        image: flink:1.6
+        imagePullPolicy: Always
+        name: flink-task-manager
+        resources:
+          limits:
+            cpu: 500m
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 1.6Gi
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - mountPath: /opt/flink/conf
+          name: config
+        - mountPath: /flink
+          name: data
+        workingDir: /opt/flink/bin
+        ports:
+          - containerPort: 6126
+            name: rpc
+          - containerPort: 6127
+            name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 20
+      volumes:
+      - name: data
+        nfs:
+          path: /flink
+          server: {{.Values.flink.nfs}}
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: flink-conf.yaml
+            mode: 511
+            path: flink-conf.yaml
+          - key: masters
+            mode: 511
+            path: masters
+          - key: log4j-console.properties
+            mode: 511
+            path: log4j-console.properties
+          name: flink-config
+        name: config

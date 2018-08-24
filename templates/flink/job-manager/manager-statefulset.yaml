@@ -1,0 +1,84 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  annotations:
+    description: flink-job-manager
+  creationTimestamp: null
+  labels:
+    qcloud-app: flink-job-manager
+  name: flink-job-manager
+  namespace: {{.Values.namespace}}
+spec:
+  serviceName: flink-job-manager
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      qcloud-app: flink-job-manager
+  template:
+    metadata:
+      labels:
+        qcloud-app: flink-job-manager
+    spec:
+      containers:
+      - args:
+        - /flink-conf/init.sh
+        command:
+        - sh
+        image: flink:1.6
+        imagePullPolicy: Always
+        name: flink-job-manager
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - mountPath: /flink
+          name: data
+        - mountPath: /flink-conf
+          name: config
+        workingDir: /opt/flink/bin
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 20
+      ports:
+        - containerPort: 6123
+          name: rpc
+        - containerPort: 6124
+          name: blob
+        - containerPort: 6125
+          name: query
+        - containerPort: 8081
+          name: ui
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 8081
+        initialDelaySeconds: 3
+        periodSeconds: 3
+      volumes:
+      - name: data
+        nfs:
+          path: /flink
+          server: {{.Values.flink.nfs}}
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: flink-conf.yaml
+            mode: 511
+            path: flink-conf.yaml
+          - key: masters
+            mode: 511
+            path: masters
+          - key: log4j-console.properties
+            mode: 511
+            path: log4j-console.properties
+          - key: init.sh
+            mode: 511
+            path: init.sh
+          name: flink-config
+        name: config

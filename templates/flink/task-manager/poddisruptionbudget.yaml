@@ -1,0 +1,10 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: flink-task-manager
+  namespace: {{.Values.namespace}}
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      qcloud-app: flink-task-manager
